@@ -5,15 +5,21 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
+var cors = require('cors')
+
+
 const app = express()
 
 //* Config JSON response
 app.use(express.json())
+app.use(cors())
+
 
 //* Models
 const User = require('./models/User')
-const { response } = require('express')
 
+
+//? AUTHENTICATION
 //* Open Route - Public Route
 app.get('/', (req, res) => {
   res.status(200).json({ msg: 'Bem vindo a nossa API!' })
@@ -36,6 +42,7 @@ app.get("/user/:id", checkToken, async (req, res) => {
 
 function checkToken(req, res, next) {
   const authHeader = req.headers['authorization']
+  console.log(authHeader)
   const token = authHeader && authHeader.split(' ')[1]
 
   if (!token) {
@@ -108,6 +115,7 @@ app.post('/auth/register', async (req, res) => {
 //* Login User
 app.post("/auth/login", async (req, res) => {
   const { email, password } = req.body
+  console.log( email, password )
 
   //* validations
   if(!email) {
@@ -142,7 +150,8 @@ app.post("/auth/login", async (req, res) => {
       secret,
     )
 
-      res.status(200).json({ msg: 'Autenticação realizada com sucesso', token })
+      let userData = { id: user._id, name: user.name, email: user.email}
+      res.status(200).json({ msg: 'Autenticação realizada com sucesso', token, userData })
   } catch (error) {
     console.log(error)
 
@@ -154,6 +163,14 @@ app.post("/auth/login", async (req, res) => {
 
 })
 
+
+//? CRUD
+//* rotas da API-CRUD
+const clientRoutes = require('./routes/clientRoutes')
+app.use('/client', clientRoutes)
+
+
+
 //* Credentials
 const dbUser = process.env.DB_USER
 const dbPassword = process.env.DB_PASS
@@ -164,6 +181,6 @@ mongoose.connect(
     `mongodb+srv://${dbUser}:${dbPassword}@cluster0.4w3ijul.mongodb.net/?retryWrites=true&w=majority`
   )
   .then(() => {
-    app.listen(3000)
+    app.listen(3300)
     console.log("conectou ao banco!")
 }).catch((err) => console.log(err))
